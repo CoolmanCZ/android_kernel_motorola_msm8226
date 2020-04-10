@@ -37,10 +37,10 @@ static void devfreq_max_unboost(struct work_struct *work);
 #define BOOST_DEV_INIT(b, dev, freq) .devices[dev] = {				\
 	.input_unboost =							\
 		__DELAYED_WORK_INITIALIZER((b).devices[dev].input_unboost,	\
-					   devfreq_input_unboost, 0),		\
+					   devfreq_input_unboost),		\
 	.max_unboost =								\
 		__DELAYED_WORK_INITIALIZER((b).devices[dev].max_unboost,	\
-					   devfreq_max_unboost, 0),		\
+					   devfreq_max_unboost),		\
 	.boost_waitq =								\
 		__WAIT_QUEUE_HEAD_INITIALIZER((b).devices[dev].boost_waitq),	\
 	.boost_freq = freq							\
@@ -57,7 +57,7 @@ static void __devfreq_boost_kick(struct boost_dev *b)
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
+	if (!queue_delayed_work(system_unbound_wq, &b->input_unboost,
 		msecs_to_jiffies(CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS)))
 		wake_up(&b->boost_waitq);
 }
@@ -89,7 +89,7 @@ static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     new_expires) != curr_expires);
 
 	set_bit(MAX_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
+	if (!queue_delayed_work(system_unbound_wq, &b->max_unboost,
 			      boost_jiffies))
 		wake_up(&b->boost_waitq);
 }
